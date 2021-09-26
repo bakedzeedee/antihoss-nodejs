@@ -1,45 +1,40 @@
-const writer = require('fs');
+import writer from 'fs';
 
-const client = require('./clientHelper.js');
-const commands = require('./messageProcessor.js');
-const { intervalMessages, stopIntervals } = require('./messageScheduler.js');
-const { DateUtil } = require('./utility.js');
+import client from './clientHelper.js';
+import { processMessage } from './messageProcessor.js';
+import { intervalMessages, stopIntervals } from './messageScheduler.js';
+import { DateUtil } from './utility.js';
+import banList from './banList.js';
 
 // Register our event handlers (defined below)
 client.on('message', onMessageHandler);
 client.on('connected', onConnectedHandler);
-client.on('reconnect', onReconnectHandler);
 client.on('disconnected', onDisconnectedHandler);
+// client.on('join', onJoin);
+client.on('reconnect', onReconnectHandler);
+client.on('roomstate', onRoomstate);
 
 // Connect to Twitch:
 client.connect();
 
 // Called every time a message comes in
 function onMessageHandler(channel, userstate, msg, self) {
-    const message = `(${DateUtil.getDateString()}) ${userstate.username}: ${msg}\n`;
-    writer.appendFile('./log.txt', message, (err) => {
-        if(err) {
-            console.log(err);
-        }
-    });
-
     if (self) { return; } // Ignore messages from the bot
 
     // Remove whitespace from chat message
-    console.log(`> ${channel}: ${msg}`);
-    
     const command = msg.trim();
-    commands.processMessage(channel, userstate, command);
+    processMessage(channel, userstate, command);
 }
 
 // Called every time the bot connects to Twitch chat
 function onConnectedHandler(addr, port) {
-    const message = `\n(* ${DateUtil.getDateString()}): Connected to ${addr}:${port}\n`;
-    writer.appendFile('./log.txt', message, (err) => {
+    const logMsg = `\n(* ${DateUtil.getDateString()}): Connected to ${addr}:${port}\n`;
+    writer.appendFile('./log.txt', logMsg, (err) => {
         if(err) {
-            console.log(err);
+            console.error(err);
         }
     });
+    console.log(logMsg);
 
     //schedule timer messages
     setTimeout(()=>{
@@ -48,21 +43,50 @@ function onConnectedHandler(addr, port) {
 }
 
 function onDisconnectedHandler(reason) {
-    const message = `\n(* ${DateUtil.getDateString()}): Disconnected: ${reason}\n\n`;
-    writer.appendFile('./log.txt', message, (err) => {
+    const logMsg = `\n(* ${DateUtil.getDateString()}): Disconnected: ${reason}\n\n`;
+    writer.appendFile('./log.txt', logMsg, (err) => {
         if(err) {
-            console.log(err);
+            console.error(err);
         }
     });
+    console.log(logMsg);
 
     stopIntervals();
 }
 
 function onReconnectHandler() {
-    const message = `\n(* ${DateUtil.getDateString()}): Reconnecting...\n`;
-    writer.appendFile('./log.txt', message, (err) => {
+    const logMsg = `\n(* ${DateUtil.getDateString()}): Reconnecting...\n`;
+    writer.appendFile('./log.txt', logMsg, (err) => {
         if(err) {
-            console.log(err);
+            console.error(err);
         }
+    });
+    console.log(logMsg);
+}
+
+function onJoin(channel, username, self) {
+    let rawUsername = username.replace(/#/, '');
+
+    /* check username of newly joined user against list of name patterns to ban */
+    banList.forEach((pattern) => {
+        if (pattern.test(rawUsername)) actions.ban(channel, rawUsername, 'Malicious Bot Detected', 'join');
+    })
+}
+
+// Called every time client joined a channel's chat
+function onRoomstate(channel, state) {
+    client.mods(channel)
+    .then((mods) => {
+        if(!mods.includes(client.username)) {
+            client.say(channel, `@${channel.replace(/#/, '')} Please mod me to enable features. Just type into chat: /mod ${client.username}`).catch(()=>{});
+        }
+    }).catch((err) => {
+        const logMsg = `\n(* ${DateUtil.getDateString()}): Couldn't retrieve roomstate upon entering room...\n`;
+        writer.appendFile(`./channels/${channel}_log.txt`, logMsg, (err) => {
+            if(err) {
+                console.error(err);
+            }
+        });
+        console.error(logMsg);
     });
 }

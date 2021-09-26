@@ -1,24 +1,26 @@
-const { client } = require('./clientHelper.js');
-const { messages } = require('./messages.js');
+import client from './clientHelper.js';
+import messages from './messages.js';
 
 const intervals = [];
 
 const intervalMessage = (target, messageObj) => {
     const interval = setInterval(()=>{
-        client.say(target, messageObj.message);
+        client.say(target, messageObj.message).catch(()=>{});
     }, messageObj.interval);
 
     intervals.push(interval);
-}
+};
 
-exports.intervalMessages = (target) => {
+const intervalMessages = (target) => {
     messages.forEach((messageObj)=>{
         intervalMessage(target, messageObj);
     });
-}
+};
 
-exports.stopIntervals = () => {
+const stopIntervals = () => {
     intervals.forEach((interval)=> {
         clearInterval(interval);
     });
-}
+};
+
+export { intervalMessages, stopIntervals };

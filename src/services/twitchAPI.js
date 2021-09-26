@@ -1,4 +1,4 @@
-const https = require('https');
+import https from 'https';
 
 const getAccessToken = (callback = res => {}) => {
     const options = {
@@ -162,6 +162,4 @@ const getClipV5 = (slug, callback = res => {}) => {
     req.end();
 };
 
-exports.getAccessToken = getAccessToken;
-exports.getUserId = getUserId;
-exports.getUserInfo = getUserInfo;
+export { getAccessToken , getBroadcasterId, getUserInfo };

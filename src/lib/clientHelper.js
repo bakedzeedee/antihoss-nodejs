@@ -1,6 +1,6 @@
-const tmi = require('tmi.js');
+import tmi from 'tmi.js';
 
-const channels = process.env.T_CHANNEL.split(", ");
+const channels = process.env.T_CHANNEL_TEST.split(/\s+/gi);
 
 // Define configuration options
 const opts = {
@@ -25,4 +25,4 @@ const opts = {
 // Create a client with our options
 const client = new tmi.client(opts);
 
-module.exports = client;
+export default client;

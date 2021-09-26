@@ -2,9 +2,11 @@
   "name": "antihoss",
   "version": "1.0.0",
   "description": "",
+  "type": "module",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node src/index.js"
   },
   "repository": {
     "type": "git",
@@ -19,6 +21,9 @@
   "homepage": "https://github.com/bakedzeedee/antihoss-nodejs#readme",
   "dependencies": {
     "dotenv": "^8.6.0",
+    "esm": "^3.2.25",
+    "nodemon": "^2.0.12",
+    "rimraf": "^3.0.2",
     "tmi.js": "^1.8.5"
   }
 }
